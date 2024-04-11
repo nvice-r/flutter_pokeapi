@@ -9,7 +9,7 @@ class LocalAuthenStateNotifier extends _$LocalAuthenStateNotifier {
   final _authenManager = LocalAuthenManager();
 
   @override
-  LocalAuthenState build() {
+  FutureOr<LocalAuthenState> build() {
     return const LocalAuthenState();
   }
 
