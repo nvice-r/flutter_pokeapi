@@ -14,51 +14,63 @@ class SplashScreen extends ConsumerWidget {
     return Center(
         child: Padding(
             padding: const EdgeInsets.fromLTRB(18, 0, 18, 0),
-            child: _loadingProgress(context)));
+            child: _loadingProgress()));
   }
 
-  Widget _loadingProgress(BuildContext context) {
+  Widget _loadingProgress() {
     return Consumer(builder: (context, ref, child) {
-      final isAuthenticated =
-          ref.watch(localAuthenStateNotifierProvider).value?.isSuccessful ??
-              false;
-      ProgressiveResult<List<Specie>>? result;
+      final isAuthenticated = ref.watch(localAuthenStateNotifierProvider
+          .select((data) => data.valueOrNull?.isSuccessful ?? false));
 
       if (isAuthenticated) {
-        ref.watch(pokemonSpecieListNotifierProvider).whenOrNull(
-            data: (data) => result = data,
-            error: (error, stackTrace) => doWhenRendered((_) async {
-                  final shouldRefresh = await showDialog<bool>(
-                          context: context,
-                          builder: (BuildContext context) =>
-                              _getPokemonListErrorAlert(context, error)) ??
-                      false;
-                  if (shouldRefresh) {
-                    ref.invalidate(pokemonSpecieListNotifierProvider);
-                  }
-                }));
-      } else {
-        doWhenRendered((_) {
-          ref
-              .read(localAuthenStateNotifierProvider.notifier)
-              .authenticateWithBiometrics();
+        ref.listen(
+            pokemonSpecieListNotifierProvider.select((value) => value.asError),
+            (previous, next) {
+          if (next != null &&
+              !next.isLoading &&
+              !next.isRefreshing &&
+              !next.isReloading) {
+            final error = next.error as Exception;
+            showDialog<bool>(
+                    context: context,
+                    builder: (BuildContext context) =>
+                        _getPokemonListErrorAlert(context, error))
+                .then((shouldRefresh) {
+              if (shouldRefresh ?? false) {
+                ref.invalidate(pokemonSpecieListNotifierProvider);
+              }
+            });
+          }
         });
       }
-      return TweenAnimationBuilder<double>(
-        duration: const Duration(milliseconds: 100),
-        curve: Curves.easeInOut,
-        tween: Tween<double>(
-          begin: 0,
-          end: result?.progress ?? 0,
-        ),
-        builder: (context, value, _) => LinearProgressIndicator(
-          value: value,
-        ),
-      );
+      return Consumer(builder: (context, ref, child) {
+        ProgressiveResult<List<Specie>>? result;
+        if (isAuthenticated) {
+          result = ref.watch(pokemonSpecieListNotifierProvider
+              .select((asyncValue) => asyncValue.value));
+        } else {
+          doWhenRendered((_) {
+            ref
+                .read(localAuthenStateNotifierProvider.notifier)
+                .authenticateWithBiometrics();
+          });
+        }
+        return TweenAnimationBuilder<double>(
+          duration: const Duration(milliseconds: 100),
+          curve: Curves.easeInOut,
+          tween: Tween<double>(
+            begin: 0,
+            end: result?.progress ?? 0,
+          ),
+          builder: (_, value, __) => LinearProgressIndicator(
+            value: value,
+          ),
+        );
+      });
     });
   }
 
-  AlertDialog _getPokemonListErrorAlert(BuildContext context, Object error) {
+  AlertDialog _getPokemonListErrorAlert(BuildContext context, Exception error) {
     return AlertDialog(
       title: const Text('Pokemon List Error'),
       content: Text(error.toString()),

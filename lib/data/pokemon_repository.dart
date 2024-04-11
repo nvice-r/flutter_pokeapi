@@ -8,36 +8,25 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'pokemon_repository.g.dart';
 
-abstract class PokemonRepository {
-  Future<Pokemon> getPokemonByName(String name);
-  Future<List<Specie>> getPokemonSpecieList();
-  bool hasPokemonSpecieListFetched();
-  Stream<ProgressiveResult<List<Specie>>> fetchPokemonSpecieList();
-}
-
-class DefaultPokemonRepository implements PokemonRepository {
+class PokemonRepository {
   final PokemonService _api;
-  DefaultPokemonRepository(this._api);
+  PokemonRepository(this._api);
 
   List<Specie> _specieList = List.empty();
   int _specieOffset = 0;
 
-  @override
   Future<Pokemon> getPokemonByName(String name) async {
     return _api.getPokemonAsync(name);
   }
 
-  @override
   Future<List<Specie>> getPokemonSpecieList() async {
     return _specieList;
   }
 
-  @override
   bool hasPokemonSpecieListFetched() {
     return _specieList.isNotEmpty;
   }
 
-  @override
   Stream<ProgressiveResult<List<Specie>>> fetchPokemonSpecieList() async* {
     const limit = 50;
     bool hasNext = true;
@@ -60,7 +49,6 @@ class DefaultPokemonRepository implements PokemonRepository {
       _specieList += data;
 
       progress = _specieList.length / count;
-      if (progress >= 0.5) throw Exception('force error at the half');
       yield ProgressiveResult(progress: progress, data: data);
     }
   }
@@ -68,5 +56,5 @@ class DefaultPokemonRepository implements PokemonRepository {
 
 @Riverpod(keepAlive: true)
 PokemonRepository pokemonRepository(PokemonRepositoryRef ref) {
-  return DefaultPokemonRepository(ref.read(pokemonServiceProvider));
+  return PokemonRepository(ref.read(pokemonServiceProvider));
 }
