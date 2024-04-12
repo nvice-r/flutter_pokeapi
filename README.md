@@ -1,4 +1,5 @@
 # flutter_pokeapi
+Demonstration for using [PokeApi V2](https://github.com/PokeAPI/pokeapi) in a Flutter.
 
 ## Description
 
@@ -10,7 +11,7 @@ To run the app, follow these steps:
 
 1. Ensure you have Flutter installed.
 2. Clone the repository.
-3. Open the project in your favourite code editor.
+3. Open the project in your favorite code editor.
 4. Run `flutter pub get` to fetch dependencies.
 5. Run `flutter run` to start the app on a connected emulator or physical device.
 
